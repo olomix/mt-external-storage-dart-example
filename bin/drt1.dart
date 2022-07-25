@@ -18,7 +18,7 @@ final iden3lib = bindings.NativeLibrary(dylib);
 final String dbRootKey = 'root';
 sembast.Database? db;
 
-bool get1(ffi.Pointer<ffi.Void> _, bindings.IDENByteArray key,
+bool getNode(ffi.Pointer<ffi.Void> _, bindings.IDENByteArray key,
     ffi.Pointer<bindings.IDENByteArray> value) {
 
   value.ref.data = ffi.nullptr;
@@ -50,7 +50,7 @@ bool get1(ffi.Pointer<ffi.Void> _, bindings.IDENByteArray key,
   }
 }
 
-bool put(ffi.Pointer<ffi.Void> _, bindings.IDENByteArray key,
+bool putNode(ffi.Pointer<ffi.Void> _, bindings.IDENByteArray key,
     bindings.IDENByteArray value) {
 
   if (db == null) {
@@ -114,13 +114,13 @@ bool setRoot(ffi.Pointer<ffi.Void> _, bindings.IDENByteArray ba) {
   }
 }
 
-final get1CB = ffi.Pointer.fromFunction<
+final getNodeCB = ffi.Pointer.fromFunction<
     ffi.Bool Function(ffi.Pointer<ffi.Void>, bindings.IDENByteArray,
-        ffi.Pointer<bindings.IDENByteArray>)>(get1, false);
+        ffi.Pointer<bindings.IDENByteArray>)>(getNode, false);
 
-final putCB = ffi.Pointer.fromFunction<
+final putNodeCB = ffi.Pointer.fromFunction<
     ffi.Bool Function(ffi.Pointer<ffi.Void>, bindings.IDENByteArray,
-        bindings.IDENByteArray)>(put, false);
+        bindings.IDENByteArray)>(putNode, false);
 
 final getRootCB = ffi.Pointer.fromFunction<
     ffi.Bool Function(ffi.Pointer<ffi.Void> , ffi.Pointer<bindings.IDENByteArray>)>(getRoot, false);
@@ -166,8 +166,8 @@ void main (List<String> arguments) async {
   ffi.Pointer<bindings.IDENMtStorage> storage =
     ffi2.calloc<bindings.IDENMtStorage>();
   storage.ref.ctx = ffi.nullptr;
-  storage.ref.get1 = get1CB;
-  storage.ref.put = putCB;
+  storage.ref.get_node = getNodeCB;
+  storage.ref.put_node = putNodeCB;
   storage.ref.get_root = getRootCB;
   storage.ref.set_root = setRootCB;
 

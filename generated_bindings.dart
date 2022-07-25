@@ -5743,21 +5743,21 @@ class _IDENByteArray extends ffi.Struct {
 class _IDENMtStorage extends ffi.Struct {
   external ffi.Pointer<ffi.Void> ctx;
 
-  external IDENMtStorageFnGet get1;
+  external IDENMtStorageFnGetNode get_node;
 
-  external IDENMtStorageFnPut put;
+  external IDENMtStorageFnPutNode put_node;
 
   external IDENMtStorageFnGetRoot get_root;
 
   external IDENMtStorageFnSetRoot set_root;
 }
 
-typedef IDENMtStorageFnGet = ffi.Pointer<
+typedef IDENMtStorageFnGetNode = ffi.Pointer<
     ffi.NativeFunction<
         ffi.Bool Function(
             ffi.Pointer<ffi.Void>, IDENByteArray, ffi.Pointer<IDENByteArray>)>>;
 typedef IDENByteArray = _IDENByteArray;
-typedef IDENMtStorageFnPut = ffi.Pointer<
+typedef IDENMtStorageFnPutNode = ffi.Pointer<
     ffi.NativeFunction<
         ffi.Bool Function(
             ffi.Pointer<ffi.Void>, IDENByteArray, IDENByteArray)>>;
