@@ -159,6 +159,11 @@ class Proof {
 
     return midKey;
   }
+
+  bool verify(Hash treeRoot, Node node) {
+    final proofTreeRoot = root(node);
+    return  proofTreeRoot == treeRoot;
+  }
 }
 
 class NotFound implements Exception {}
