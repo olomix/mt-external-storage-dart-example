@@ -123,11 +123,50 @@ class Node {
   }
 }
 
+class Proof {
+  bool existence;
+  List<Hash> siblings;
+  Node? nodeAux;
+
+  Proof(this.existence, this.siblings, this.nodeAux);
+
+  Hash root (Node n) {
+    assert(n._type == NodeType.leaf);
+    Hash midKey;
+    if (existence) {
+      midKey = n.key;
+    } else {
+      if (nodeAux == null) {
+        midKey = Hash.zero();
+      } else {
+        assert(nodeAux!._type == NodeType.leaf);
+        if (n.entry![0] == nodeAux!.entry![0]) {
+          throw Exception("Non-existence proof being checked against hIndex equal to nodeAux");
+        }
+        midKey = nodeAux!.key;
+      }
+    }
+
+    final path = _getPath(siblings.length, n.entry![0]);
+
+    for (int lvl = siblings.length - 1; lvl >= 0; lvl--) {
+      if (path[lvl]) {
+        midKey = Node.middle(siblings[lvl], midKey).key;
+      } else {
+        midKey = Node.middle(midKey, siblings[lvl]).key;
+      }
+    }
+
+    return midKey;
+  }
+}
+
 class NotFound implements Exception {}
 class NodeKeyAlreadyExists implements Exception {}
 class EntryIndexAlreadyExists implements Exception {}
 class ReachedMaxLevel implements Exception {}
 class InvalidNodeFound implements Exception {}
+class KeyNotFound implements Exception {}
 
 abstract class Storage {
   Node get(Hash k);
@@ -288,6 +327,37 @@ class MerkleTree {
 
     _addNode(newLeaf);
     return _addNode(newNodeMiddle);
+  }
+
+  Proof generateProof(Hash key) {
+    final path = _getPath(maxLevels, key);
+    var siblings = <Hash>[];
+    var nextKey = root;
+    for (int depth = 0; depth < maxLevels; depth++) {
+      final n = getNode(nextKey);
+      switch(n._type) {
+        case NodeType.empty:
+          return Proof(false, siblings, null);
+        case NodeType.leaf:
+          if (n.entry![0] == key) {
+            return Proof(true, siblings, null);
+          }
+          // We found a leaf whose entry didn't match key
+          return Proof(false, siblings, n);
+        case NodeType.middle:
+          if (path[depth]) {
+            nextKey = n.childR!;
+            siblings.add(n.childL!);
+          } else {
+            nextKey = n.childL!;
+            siblings.add(n.childR!);
+          }
+          continue;
+        default:
+          throw InvalidNodeFound();
+      }
+    }
+    throw KeyNotFound();
   }
 }
 
