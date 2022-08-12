@@ -89,6 +89,8 @@ class Node {
 
   List<Hash>? entry; // data stored in a leaf node
 
+  Hash? _key; // cache for calculated key
+
   Node(this._type);
 
   Node.leaf(Hash k, Hash v): _type = NodeType.leaf {
@@ -100,14 +102,19 @@ class Node {
   Node.empty(): _type = NodeType.empty;
 
   Hash get key {
-    switch (_type) {
-      case NodeType.leaf:
-        return poseidonHashHashes3(entry![0], entry![1], Hash.fromBigInt(BigInt.one));
-      case NodeType.middle:
-        return poseidonHashHashes2(childL!, childR!);
-      default:
-        return Hash.zero();
+    if (_key == null) {
+      switch (_type) {
+        case NodeType.leaf:
+          _key = poseidonHashHashes3(entry![0], entry![1], Hash.fromBigInt(BigInt.one));
+          break;
+        case NodeType.middle:
+          _key = poseidonHashHashes2(childL!, childR!);
+          break;
+        default:
+          _key = Hash.zero();
+      }
     }
+    return _key!;
   }
 
   @override
@@ -378,24 +385,6 @@ final libbabyjubjub = DynamicLibrary.open("/Users/alek/src/polygonid-flutter-sdk
 final cstringFree = libbabyjubjub.lookupFunction<
     Void Function(Pointer<Utf8>),
     void Function(Pointer<Utf8>)>("cstring_free");
-final _poseidonHash = libbabyjubjub.lookupFunction<
-    Pointer<Utf8> Function(Pointer<Utf8>),
-    Pointer<Utf8> Function(Pointer<Utf8>)>("poseidon_hash");
-String poseidonHash(String input) {
-  final ptr1 = input.toNativeUtf8();
-  try {
-    final resultPtr = _poseidonHash(ptr1);
-    String resultString = resultPtr.toDartString();
-    print("got string: $resultString");
-    resultString = resultString.replaceAll("Fr(", "");
-    resultString = resultString.replaceAll(")", "");
-    cstringFree(resultPtr);
-    return resultString;
-  } catch (e) {
-    print("error: $e");
-    return "";
-  }
-}
 
 final _poseidonHash3 = libbabyjubjub.lookupFunction<
     Pointer<Utf8> Function(Pointer<Utf8>, Pointer<Utf8>, Pointer<Utf8>),
@@ -466,10 +455,4 @@ Hash poseidonHashHashes2(Hash a, Hash b) {
 Hash poseidonHashHashes3(Hash a, Hash b, Hash c) {
   return Hash.fromBigInt(
       poseidonHashInts3(a.toBigInt(), b.toBigInt(), c.toBigInt()));
-}
-
-Uint8List _swap(Uint8List a) {
-  final x = List<int>.filled(a.length, 0);
-  a.asMap().forEach((idx, elm) => { x[a.length - 1 - idx] = elm});
-  return Uint8List.fromList(x);
 }

@@ -20,9 +20,12 @@ main() {
   mt.add(Hash.fromHex("5a27db029de37ae37a42318813487685929359ca8c5eb94e152dc1af42ea3d16").toBigInt(),
       Hash.fromHex("e50be1a6dc1d5768e8537988fddce562e9b948c918bba3e933e5c400cde5e60c").toBigInt());
   print("node added");
+
+  final dt1 = DateTime.now();
   mt.add(Hash.fromHex("0a8691332088a805bd55c446e25eb07590bafcccbec6177536401d9a2b7f512b").toBigInt(),
       Hash.fromHex("54bfc9d00532adf5aaa7c3a96bc59b489f77d9042c5bce26b163defde5ee6a0f").toBigInt());
   print("node added");
+  print("time: ${DateTime.now().difference(dt1)}");
   print("root: ${mt.root.toString()}");
 
   final proof = mt.generateProof(Hash.fromHex("0a8691332088a805bd55c446e25eb07590bafcccbec6177536401d9a2b7f512b"));
@@ -59,4 +62,5 @@ main() {
   final b3 = BigInt.parse("21888242871839275222246405745257275088548364400416034343698204186575808495614");
   final b4 = poseidonHashInts3(b1, b2, b3);
   print("b4 = ${b4.toRadixString(10)}");
+
 }
