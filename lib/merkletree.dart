@@ -438,7 +438,7 @@ BigInt poseidonHashInts(List<BigInt> bis) {
   }
 
   Pointer<Pointer<bindings.IDENBigInt>> hash =
-  malloc<Pointer<bindings.IDENBigInt>>();
+    malloc<Pointer<bindings.IDENBigInt>>();
   hash.value = nullptr;
 
   try {
