@@ -4480,6 +4480,34 @@ class NativeLibrary {
   late final _IDENFreeCircuitsBJJSignatureProof =
       _IDENFreeCircuitsBJJSignatureProofPtr.asFunction<
           void Function(ffi.Pointer<IDENCircuitsBJJSignatureProof>)>();
+
+  int IDENHashInts(
+    ffi.Pointer<ffi.Pointer<IDENBigInt>> hash,
+    int n,
+    ffi.Pointer<ffi.Pointer<IDENBigInt>> ints,
+    ffi.Pointer<ffi.Pointer<IDENStatus>> status,
+  ) {
+    return _IDENHashInts(
+      hash,
+      n,
+      ints,
+      status,
+    );
+  }
+
+  late final _IDENHashIntsPtr = _lookup<
+      ffi.NativeFunction<
+          GoUint8 Function(
+              ffi.Pointer<ffi.Pointer<IDENBigInt>>,
+              ffi.Size,
+              ffi.Pointer<ffi.Pointer<IDENBigInt>>,
+              ffi.Pointer<ffi.Pointer<IDENStatus>>)>>('IDENHashInts');
+  late final _IDENHashInts = _IDENHashIntsPtr.asFunction<
+      int Function(
+          ffi.Pointer<ffi.Pointer<IDENBigInt>>,
+          int,
+          ffi.Pointer<ffi.Pointer<IDENBigInt>>,
+          ffi.Pointer<ffi.Pointer<IDENStatus>>)>();
 }
 
 class __mbstate_t extends ffi.Union {

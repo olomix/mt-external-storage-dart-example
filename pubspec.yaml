@@ -18,7 +18,7 @@ dependencies:
   ffi: ^2.0.1
   sembast: ^3.2.0+1
 ffigen:
-  output: 'generated_bindings.dart'
+  output: 'lib/generated_bindings.dart'
   headers:
     entry-points:
       - '/Users/alek/src/go-iden3-core-clib/ios/libiden3core.h'

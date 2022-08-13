@@ -1,7 +1,7 @@
 import 'dart:cli';
 import 'dart:ffi' as ffi;
 import 'dart:typed_data';
-import '../generated_bindings.dart' as bindings;
+import '../lib/generated_bindings.dart' as bindings;
 import 'package:ffi/ffi.dart' as ffi2;
 import 'package:sembast/sembast_io.dart' as sembast_io;
 import 'package:sembast/sembast.dart' as sembast;

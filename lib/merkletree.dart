@@ -2,6 +2,7 @@ import 'dart:ffi';
 import 'dart:typed_data';
 import 'package:convert/convert.dart' as convert;
 import 'package:ffi/ffi.dart';
+import 'generated_bindings.dart' as bindings;
 
 final _q = BigInt.parse("21888242871839275222246405745257275088548364400416034343698204186575808495617");
 
@@ -105,10 +106,10 @@ class Node {
     if (_key == null) {
       switch (_type) {
         case NodeType.leaf:
-          _key = poseidonHashHashes3(entry![0], entry![1], Hash.fromBigInt(BigInt.one));
+          _key = poseidonHashHashes([entry![0], entry![1], Hash.fromBigInt(BigInt.one)]);
           break;
         case NodeType.middle:
-          _key = poseidonHashHashes2(childL!, childR!);
+          _key = poseidonHashHashes([childL!, childR!]);
           break;
         default:
           _key = Hash.zero();
@@ -381,78 +382,118 @@ List<bool> _getPath(int numLevel, Hash h) {
   return path;
 }
 
-final libbabyjubjub = DynamicLibrary.open("/Users/alek/src/polygonid-flutter-sdk/rust/target/debug/libbabyjubjub.dylib");
-final cstringFree = libbabyjubjub.lookupFunction<
-    Void Function(Pointer<Utf8>),
-    void Function(Pointer<Utf8>)>("cstring_free");
+final dylibPath = '/Users/alek/src/go-iden3-core-clib/ios/libiden3core.dylib';
+final iden3lib = bindings.NativeLibrary(DynamicLibrary.open(dylibPath));
 
-final _poseidonHash3 = libbabyjubjub.lookupFunction<
-    Pointer<Utf8> Function(Pointer<Utf8>, Pointer<Utf8>, Pointer<Utf8>),
-    Pointer<Utf8> Function(Pointer<Utf8>, Pointer<Utf8>, Pointer<Utf8>)>("hash_poseidon");
-String __poseidonHash3(String v0, String v1, String v2) {
-  final ptr0 = v0.toNativeUtf8();
-  final ptr1 = v1.toNativeUtf8();
-  final ptr2 = v2.toNativeUtf8();
+Hash poseidonHashHashes(List<Hash> hs) {
+  if (hs.isEmpty) {
+    return Hash.zero();
+  }
+
+  Pointer<Pointer<bindings.IDENBigInt>> ints = malloc<Pointer<bindings.IDENBigInt>>(hs.length);
+  for (int i = 0; i < hs.length; i++) {
+    ints[i] = nullptr;
+  }
+
+  Pointer<Pointer<bindings.IDENBigInt>> hash = malloc<Pointer<bindings.IDENBigInt>>();
+  hash.value = nullptr;
+
   try {
-    final resultPtr = _poseidonHash3(ptr0, ptr1, ptr2);
-    String resultString = resultPtr.toDartString();
-    resultString = resultString.replaceAll("Fr(", "");
-    resultString = resultString.replaceAll(")", "");
-    cstringFree(resultPtr);
-    return resultString;
-  } catch (e) {
-    return "";
+    for (int i = 0; i < hs.length; i++) {
+      final intACStr = hs[i].toBigInt().toRadixString(10).toNativeUtf8();
+      try {
+        int ok = iden3lib.IDENBigIntFromString(ints.elementAt(i),
+            intACStr.cast(), nullptr);
+        if (ok != 1) {
+          throw Exception("can't create IDENBigInt from int");
+        }
+      } finally {
+        malloc.free(intACStr);
+      }
+    }
+
+    int ok = iden3lib.IDENHashInts(hash, hs.length, ints, nullptr);
+    if (ok != 1) {
+      throw Exception("can't calc hash of ints");
+    }
+
+    return hashFromIdenBigInt(hash.value);
+  } finally {
+    for (int i = 0; i < hs.length; i++) {
+      iden3lib.IDENFreeBigInt(ints[i]);
+    }
+    iden3lib.IDENFreeBigInt(hash.value);
   }
 }
 
-final _poseidonHash2 = libbabyjubjub.lookupFunction<
-    Pointer<Utf8> Function(Pointer<Utf8>, Pointer<Utf8>),
-    Pointer<Utf8> Function(Pointer<Utf8>, Pointer<Utf8>)>("hash2_poseidon");
-String __poseidonHash2(String v0, String v1) {
-  final ptr0 = v0.toNativeUtf8();
-  final ptr1 = v1.toNativeUtf8();
+BigInt poseidonHashInts(List<BigInt> bis) {
+  if (bis.isEmpty) {
+    return BigInt.zero;
+  }
+
+  Pointer<Pointer<bindings.IDENBigInt>> ints =
+    malloc<Pointer<bindings.IDENBigInt>>(bis.length);
+  for (int i = 0; i < bis.length; i++) {
+    ints[i] = nullptr;
+  }
+
+  Pointer<Pointer<bindings.IDENBigInt>> hash =
+  malloc<Pointer<bindings.IDENBigInt>>();
+  hash.value = nullptr;
+
   try {
-    final resultPtr = _poseidonHash2(ptr0, ptr1);
-    String resultString = resultPtr.toDartString();
-    resultString = resultString.replaceAll("Fr(", "");
-    resultString = resultString.replaceAll(")", "");
-    cstringFree(resultPtr);
-    return resultString;
-  } catch (e) {
-    return "";
+    for (int i = 0; i < bis.length; i++) {
+      final intACStr = bis[i].toRadixString(10).toNativeUtf8();
+      try {
+        int ok = iden3lib.IDENBigIntFromString(ints.elementAt(i),
+            intACStr.cast(), nullptr);
+        if (ok != 1) {
+          throw Exception("can't create IDENBigInt from int");
+        }
+      } finally {
+        malloc.free(intACStr);
+      }
+    }
+
+    int ok = iden3lib.IDENHashInts(hash, bis.length, ints, nullptr);
+    if (ok != 1) {
+      throw Exception("can't calc hash of ints");
+    }
+
+    return bigIntFromIdenBigInt(hash.value);
+  } finally {
+    for (int i = 0; i < bis.length; i++) {
+      iden3lib.IDENFreeBigInt(ints[i]);
+    }
+    iden3lib.IDENFreeBigInt(hash.value);
   }
 }
 
-BigInt poseidonHashInts2(BigInt a, BigInt b) {
-  final h = __poseidonHash2(a.toRadixString(10), b.toRadixString(10));
-  final h2 = Uint8List.fromList(convert.hex.decode(h));
-  // rust implementation of poseidon returns int in big endian, no swapping
-  // final h3 = _swap(h2);
-  final i =  BigInt.tryParse(convert.hex.encode(h2), radix: 16);
-  if (i == null) {
-    throw ArgumentError("Could not parse hash");
+Hash hashFromIdenBigInt(Pointer<bindings.IDENBigInt> v) {
+  if (v.ref.data_len == 0) {
+    return Hash.zero();
+  }
+  if (v.ref.data_len > 32) {
+    throw ArgumentError("value is too big");
+  }
+
+  final h = Hash.zero();
+  for (int i = 0; i < v.ref.data_len; i++) {
+    h._data[i] = v.ref.data[i];
+  }
+
+  return h;
+}
+
+BigInt bigIntFromIdenBigInt(Pointer<bindings.IDENBigInt> v) {
+  if (v.ref.data_len == 0) {
+    return BigInt.zero;
+  }
+
+  final b = BigInt.from(256);
+  BigInt i = BigInt.from(0);
+  for (int j = v.ref.data_len - 1; j >= 0 ; j--) {
+    i = i * b + BigInt.from(v.ref.data[j]);
   }
   return i;
-}
-
-BigInt poseidonHashInts3(BigInt a, BigInt b, BigInt c) {
-  final h = __poseidonHash3(a.toRadixString(10), b.toRadixString(10),
-      c.toRadixString(10));
-  final h2 = Uint8List.fromList(convert.hex.decode(h));
-  // rust implementation of poseidon returns int in big endian, no swapping
-  // final h3 = _swap(h2);
-  final i =  BigInt.tryParse(convert.hex.encode(h2), radix: 16);
-  if (i == null) {
-    throw ArgumentError("Could not parse hash");
-  }
-  return i;
-}
-
-Hash poseidonHashHashes2(Hash a, Hash b) {
-  return Hash.fromBigInt(poseidonHashInts2(a.toBigInt(), b.toBigInt()));
-}
-
-Hash poseidonHashHashes3(Hash a, Hash b, Hash c) {
-  return Hash.fromBigInt(
-      poseidonHashInts3(a.toBigInt(), b.toBigInt(), c.toBigInt()));
 }
